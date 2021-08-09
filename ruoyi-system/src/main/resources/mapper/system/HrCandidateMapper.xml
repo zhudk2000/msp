@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.HrCandidateMapper">
+    
+    <resultMap type="HrCandidate" id="HrCandidateResult">
+        <result property="id"    column="id"    />
+        <result property="cname"    column="cname"    />
+        <result property="ename"    column="ename"    />
+        <result property="gender"    column="gender"    />
+        <result property="age"    column="age"    />
+        <result property="workingHistory"    column="working_history"    />
+        <result property="educationInfo"    column="education_info"    />
+        <result property="interviewTime1"    column="interview_time1"    />
+        <result property="interviewBy1"    column="interview_by1"    />
+        <result property="hrContactTime"    column="hr_contact_time"    />
+        <result property="remarks"    column="remarks"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="interviewPosition1"    column="interview_position1"    />
+        <result property="contactInfo"    column="contact_info"    />
+        <result property="otherContactInfo"    column="other_contact_info"    />
+        <result property="interviewPosition1Id"    column="interview_position1_id"    />
+    </resultMap>
+
+    <sql id="selectHrCandidateVo">
+        select id, cname, ename, gender, age, working_history, education_info, interview_time1, interview_by1, hr_contact_time, remarks, create_time, create_by, interview_position1, interview_position1_id, contact_info, other_contact_info from hr_candidate
+    </sql>
+
+    <select id="selectHrCandidateList" parameterType="HrCandidate" resultMap="HrCandidateResult">
+        <include refid="selectHrCandidateVo"/>
+        <where>  
+            <if test="cname != null  and cname != ''"> and cname like concat('%', #{cname}, '%')</if>
+            <if test="ename != null  and ename != ''"> and ename like concat('%', #{ename}, '%')</if>
+            <if test="gender != null  and gender != ''"> and gender = #{gender}</if>
+            <if test="workingHistory != null  and workingHistory != ''"> and working_history like concat('%', #{workingHistory}, '%')</if>
+            <if test="educationInfo != null  and educationInfo != ''"> and education_info like concat('%', #{educationInfo}, '%')</if>
+            <if test="createTime != null "> and create_time = #{createTime}</if>
+            <if test="interviewPosition1 != null  and interviewPosition1 != ''"> and interview_position1 = #{interviewPosition1}</if>
+            <if test="contactInfo != null  and contactInfo != ''"> and contact_info = #{contactInfo}</if>
+        </where>
+    </select>
+    
+    <select id="selectHrCandidateById" parameterType="String" resultMap="HrCandidateResult">
+        <include refid="selectHrCandidateVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertHrCandidate" parameterType="HrCandidate">
+        insert into hr_candidate
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="cname != null and cname != ''">cname,</if>
+            <if test="ename != null and ename != ''">ename,</if>
+            <if test="gender != null and gender != ''">gender,</if>
+            <if test="age != null">age,</if>
+            <if test="workingHistory != null and workingHistory != ''">working_history,</if>
+            <if test="educationInfo != null and educationInfo != ''">education_info,</if>
+            <if test="interviewTime1 != null">interview_time1,</if>
+            <if test="interviewBy1 != null">interview_by1,</if>
+            <if test="hrContactTime != null">hr_contact_time,</if>
+            <if test="remarks != null">remarks,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="interviewPosition1 != null and interviewPosition1 != ''">interview_position1,</if>
+            <if test="contactInfo != null">contact_info,</if>
+            <if test="otherContactInfo != null">other_contact_info,</if>
+            <if test="interviewPosition1Id != null">interview_position1_id,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="cname != null and cname != ''">#{cname},</if>
+            <if test="ename != null and ename != ''">#{ename},</if>
+            <if test="gender != null and gender != ''">#{gender},</if>
+            <if test="age != null">#{age},</if>
+            <if test="workingHistory != null and workingHistory != ''">#{workingHistory},</if>
+            <if test="educationInfo != null and educationInfo != ''">#{educationInfo},</if>
+            <if test="interviewTime1 != null">#{interviewTime1},</if>
+            <if test="interviewBy1 != null">#{interviewBy1},</if>
+            <if test="hrContactTime != null">#{hrContactTime},</if>
+            <if test="remarks != null">#{remarks},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="interviewPosition1 != null and interviewPosition1 != ''">#{interviewPosition1},</if>
+            <if test="contactInfo != null">#{contactInfo},</if>
+            <if test="otherContactInfo != null">#{otherContactInfo},</if>
+            <if test="interviewPosition1Id != null">interview_position1_id,</if>
+         </trim>
+    </insert>
+
+    <update id="updateHrCandidate" parameterType="HrCandidate">
+        update hr_candidate
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="cname != null and cname != ''">cname = #{cname},</if>
+            <if test="ename != null and ename != ''">ename = #{ename},</if>
+            <if test="gender != null and gender != ''">gender = #{gender},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="workingHistory != null and workingHistory != ''">working_history = #{workingHistory},</if>
+            <if test="educationInfo != null and educationInfo != ''">education_info = #{educationInfo},</if>
+            <if test="interviewTime1 != null">interview_time1 = #{interviewTime1},</if>
+            <if test="interviewBy1 != null">interview_by1 = #{interviewBy1},</if>
+            <if test="hrContactTime != null">hr_contact_time = #{hrContactTime},</if>
+            <if test="remarks != null">remarks = #{remarks},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createBy != null and createBy != ''">create_by = #{createBy},</if>
+            <if test="interviewPosition1 != null and interviewPosition1 != ''">interview_position1 = #{interviewPosition1},</if>
+            <if test="contactInfo != null">contact_info = #{contactInfo},</if>
+            <if test="otherContactInfo != null">other_contact_info = #{otherContactInfo},</if>
+            <if test="interviewPosition1Id != null">interview_position1_id = #{interviewPosition1Id},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteHrCandidateById" parameterType="String">
+        delete from hr_candidate where id = #{id}
+    </delete>
+
+    <delete id="deleteHrCandidateByIds" parameterType="String">
+        delete from hr_candidate where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

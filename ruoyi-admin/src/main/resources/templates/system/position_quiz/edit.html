@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('修改岗位考题维护')" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-position_quiz-edit" th:object="${hrPositionQuestions}">
+            <input name="id" th:field="*{id}" type="hidden">
+            <div class="form-group">    
+                <label class="col-sm-3 control-label is-required">岗位编号：</label>
+                <div class="col-sm-8">
+                    <input name="positionId" th:field="*{positionId}" class="form-control" type="text" required readonly>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label is-required">岗位名称：</label>
+                <div class="col-sm-8">
+                    <input name="positionName" th:field="*{positionName}" class="form-control" type="text" required readonly>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">问题大类：</label>
+                <div class="col-sm-8">
+                    <!-- <input name="questionCategory" th:field="*{questionCategory}" class="form-control" type="text"> -->
+                    <select name="questionCategory" id="questionCategory" onchange="quizChgEvent();" class="form-control m-b" th:with="type=${@dict.getType('hr_interview_quiz_category')}" required>
+                        <option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}" th:selected="*{questionCategory} == ${dict.dictValue}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">问题子类：</label>
+                <div class="col-sm-8">
+                    <!-- <input name="questionSubCategory" th:field="*{questionSubCategory}" class="form-control" type="text"> -->
+                    <select name="questionSubCategory" id="questionSubCategory" onchange="quizDetailChgEvent();" class="form-control m-b" type="text" required>
+                        <option></option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label is-required">问题编号：</label>
+                <div class="col-sm-8">
+                    <input name="questionId" th:field="*{questionId}" class="form-control" type="text" required readonly>
+                </div>
+            </div>
+            <div class="form-group">    
+                <label class="col-sm-3 control-label">问题清单：</label>
+                <div class="col-sm-8">
+                    <span id="spanQuiz"></span>
+                </div>
+            </div>
+        </form>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "system/position_quiz";
+
+        $(function() {
+            quizChgEvent();
+            $("#questionSubCategory").val([[${hrPositionQuestions.questionSubCategory}]]);
+            $("#questionId").val([[${hrPositionQuestions.questionId}]]);
+            quizDetailChgEvent();
+        });
+
+        $("#form-position_quiz-edit").validate({
+            focusCleanup: true
+        });
+
+        function quizChgEvent(){
+            let l = [[${quiz_category}]];
+            let c = $("#questionCategory").val();
+            clearQuiz();
+            $("#questionSubCategory").empty();
+            $("#questionSubCategory").append("<option>-</option>");
+            for(var i=0; i<l.length; i++){
+                var s = l[i].subCategory;
+                if(l[i].category == c){
+                    $("#questionSubCategory").append("<option value='" + s + "'>" + s + "</option>");
+                }
+            }
+        }
+
+        function quizDetailChgEvent(){
+            var category = $("#questionCategory").val();
+            var subCategory = $("#questionSubCategory").val();
+            $.ajax({
+				cache : true,
+				type : "POST",
+				url : ctx + "system/questions/catequiz",
+				data : {
+					"category": category,
+					"subCategory": subCategory
+				},
+				async : false,
+				error : function(request) {
+					$.modal.alertError("系统错误");
+				},
+				success : function(data) {
+                    let ids = '';
+                    let txts = '';
+                    data.rows.forEach ((row, idx, array) =>{
+                        ids += row.id + ",";
+                        txts += row.question + "<br>";
+                    });
+                    $("#questionId").val(ids);
+                    $("#spanQuiz").html(txts);
+				}
+			});
+        }
+
+        function clearQuiz(){
+            $("#questionId").val("");
+            $("#spanQuiz").html("");
+        }
+
+        function submitHandler() {
+            if ($.validate.form()) {
+                $.operate.save(prefix + "/edit", $('#form-position_quiz-edit').serialize());
+            }
+        }
+    </script>
+</body>
+</html>

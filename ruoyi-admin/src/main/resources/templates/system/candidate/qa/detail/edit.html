@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('修改候选人答题结果')" />
+</head>
+<body class="white-bg">
+    <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            <label>候选人：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblCandidateName" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                        <li>
+                            <label>岗位名称：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblPositionName" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="ibox-content" id="divChart">
+                <div class="echarts" id="echarts-radar-chart"></div>
+            </div>
+            <form id="frm_answer">
+            <div class="wrapper wrapper-content animated fadeInRight ibox-content" id="divContent">
+                <!-- Here is body ... -->
+            </div>
+            </form>
+            
+            <div class="row">
+                <div class="col-sm-offset-5 col-sm-10">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()" id="btnSave"><i class="fa fa-check"></i>保 存</button>&nbsp;
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭 </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: echarts-js" />
+    <script th:inline="javascript">
+        var prefix = ctx + "system/candidate/qa/detail"
+        var arrAnswers;
+        var arrCate;
+        var candidate;
+        var all_answered;
+        var chartData;
+
+        $(function() {
+            arrAnswers = [[${answers}]];
+            arrCate = [[${quiz_category}]];
+            candidate = [[${candidate}]];
+            all_answered = [[${all_answered}]];
+            chartData = [[${chartData}]];
+
+            if (all_answered == "1"){
+                $("#btnSave").remove();
+                renderCharts();
+            }else{
+                $("#divChart").remove();
+            }
+
+            renderQuiz();
+        });
+
+        function getSubCategory(category){
+            let result = [];
+
+            arrAnswers.forEach((a, idx, array) =>{
+                if (a.questionCategory == category){
+                    result.push(a.questionSubCategory);
+                }
+            });
+
+            let set = new Set(result);
+            
+            return Array.from(set);
+        }
+
+        function renderQuiz(){
+            $("#lblCandidateName").text(candidate.cname);
+            $("#lblPositionName").text(candidate.interviewPosition1);
+
+            if ((arrAnswers) && (arrAnswers.length > 0)){
+                let contentHtml = '';
+                arrCate.forEach((cate, idx1, array1) =>{
+                    contentHtml += '<div class="ibox"><div class="ibox-title"><h5>' + cate + '</h5></div><div class="ibox-content">';
+                    
+                    subCate = getSubCategory(cate);
+                    subCate.forEach((subCate, idx2, array2) =>{
+                        contentHtml += '<div><h4>' + subCate + '</h4></div>';
+                        contentHtml += '<div class="row">';
+
+                        // loop the question/answer detail
+                        arrAnswers.forEach((row, idx3, array3) =>{
+                            if ((row.questionCategory == cate) && (row.questionSubCategory == subCate)){
+                                let maxScore = 0;
+                                contentHtml += '<div class="col-sm-12"><span class="col-sm-6" style="text-align:left;" id="span-' + row.id + '">' + row.question + '</span>';
+                                // 根据答案生成不同的html
+                                if ((typeof(row.candidateScore) == "undefined") || (typeof(row.candidateScore) == "object") || (row.candidateScore == null)){ // 未作答，人工批改
+                                    $.ajax({
+                                        cache : true,
+                                        type : "POST",
+                                        url : ctx + "system/questions/getQuizById",
+                                        data : {
+                                            "id": row.questionId
+                                        },
+                                        async : false,
+                                        error : function(request) {
+                                            $.modal.alertError("系统错误，请联系管理员！");
+                                        },
+                                        success : function(data) {
+                                            maxScore = data.questionScore;
+                                        }
+                                    });
+                                    let checkFlag = "<span style='font-weight:bold;color:blue;'>【批改：】";
+                                    checkFlag += "<input type='number' maxlength='2' required id='score_" + row.id + "' style='width:50px;' attr='score' min='0'>";
+                                    checkFlag += "满分：" + maxScore + "&nbsp;<input type='hidden' value='" + maxScore +  "' id='max_score_" + row.id + "'>";
+                                    checkFlag += "</span>";
+                                    contentHtml += '<span class="col-sm-6">' + checkFlag + '<br>答案：<br>' + row.candidateAnswer;
+                                    contentHtml += "</span>";
+                                }else{ //已作答 系统已自动核对答案 生成分数
+                                    let resultFlag = "<span style='color:green;'>【正确&nbsp;" + row.candidateScore + "】</span>";
+                                    if(row.candidateScore == 0){
+                                        resultFlag = "<span style='color:red;'>【错误&nbsp;" + row.candidateScore + "】</span>";
+                                    }
+                                    contentHtml += '<span class="col-sm-6">' + resultFlag + '&nbsp; 答案：';
+                                    if (row.candidateAnswer.length > 20){
+                                        contentHtml += '<br>';
+                                    }
+                                    contentHtml += row.candidateAnswer;
+                                    contentHtml += '</span>';
+                                }
+                                contentHtml += '</div>';
+                            }
+
+                        });
+                        //
+                        contentHtml += '</div>';
+                    });
+                    contentHtml += '</div></div>';
+                });
+
+                $("#divContent").append(contentHtml);
+            }else{
+                $.modal.msgError("该候选人还未填写问卷！");
+                return;
+            }
+        }
+        //$("#form-candidate-qa-detail-edit").validate({
+        //    focusCleanup: true
+        //});
+
+        function submitHandler() {
+            if ($.validate.form()) { //保存分数
+                let jsonData = [];
+                $("[attr='score']").each(function(idx, obj){
+                    let row = {};
+                    row.id = obj.id.replace("score_", "");
+                    row.value = obj.value;
+                    jsonData.push(row);
+                });
+
+                $.ajax({
+                    cache : true,
+                    type : "POST",
+                    url : prefix + "/updateScore",
+                    data : {
+                        "scores": encodeURIComponent(JSON.stringify(jsonData))
+                    },
+                    async : false,
+                    error : function(request) {
+                        $.modal.alertError("系统错误");
+                    },
+                    success : function(data) {
+                        if (data == "saved"){
+                            alert("保存成功！");
+                            closeItem();
+                        }else{
+                            $.modal.alertWarning("保存失败，请检查数据!");
+                        }
+                    }
+                });
+
+            }else{
+                $.modal.alertError("请输入正确的分数！")
+            }
+        }
+        
+        function renderCharts(){
+            var jsonIndicator = [];
+            var jsonData = [];
+            var jTitle = chartData[0].split(";");
+            var jMax = chartData[1].split(";");
+            var jData = chartData[3].split(";");
+
+            jsonData = [];
+            let r1 = {};
+            r1.name = '问卷数据';
+            r1.value = jData;
+            jsonData.push(r1);
+
+            for (var j=0; j < jTitle.length; j++){
+                let row = {};
+                row.text = jTitle[j];
+                row.max = jMax[j];
+                jsonIndicator.push(row);
+            }
+            
+            var i = -1;
+	        var radarChart = echarts.init(document.getElementById("echarts-radar-chart"));
+	        var radaroption = {
+	            title : {
+	                text: '岗位胜任图',
+	                subtext: candidate.cname + "-" + arrAnswers[0].answerBatch
+	            },
+	            tooltip : {
+	                trigger: 'axis'
+	            },
+	            legend: {
+	                orient : 'vertical',
+	                x : 'right',
+	                y : 'bottom',
+	                data:['能力问卷数据']
+	            },
+	            polar : [
+	               {
+                       indicator: jsonIndicator
+	                   /*indicator : [
+	                       { text: '销售', max: 60},
+	                       { text: '管理', max: 16},
+	                       { text: '信息技术', max: 30},
+	                       { text: '客服', max: 32},
+	                       { text: '市场', max: 25}
+	                    ]*/
+	                }
+	            ],
+
+
+                name: {
+                    rich: {
+                        a: {
+                            color: 'red',
+                            lineHeight: 20
+                        },
+                        b: {
+                            color: '#fff',
+                            align: 'center',
+                            backgroundColor: '#666',
+                            padding: 2,
+                            borderRadius: 4
+                        }
+                    },
+                    formatter: (a,b)=>{
+                        i++;
+                        //return `{a|${a}}\n{b|${jMax[i]}}`;
+                        return `${a}【${jMax[i]}】`
+                    }
+                },                
+
+
+	            calculable : true,
+	            series : [
+	                {
+	                    name: '岗位胜任评价',
+	                    type: 'radar',
+                        label: {
+                            normal: {
+                                show: true,
+                                formatter:function(params) {
+                                    return params.value;
+                                }
+                            }
+                        },
+	                    data: jsonData
+                        /*data : [
+	                        {
+	                            value : [43, 10, 28, 35, 19],
+	                            name : '问卷数据'
+	                        }
+	                    ]*/
+	                }
+	            ]
+	        };
+	
+	        radarChart.setOption(radaroption);
+	        $(window).resize(radarChart.resize);
+        }
+    </script>
+</body>
+</html>

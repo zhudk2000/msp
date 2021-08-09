@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.HrInterviewQuestionsMapper">
+    
+    <resultMap type="HrInterviewQuestions" id="HrInterviewQuestionsResult">
+        <result property="id"    column="id"    />
+        <result property="question"    column="question"    />
+        <result property="questionFormat"    column="question_format"    />
+        <result property="correctAnswer"    column="correct_answer"    />
+        <result property="answerList"    column="answer_list"    />
+        <result property="questionScore"    column="question_score"    />
+        <result property="category"    column="category"    />
+        <result property="subCategory"    column="sub_category"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="isEnabled"    column="is_enabled"    />
+    </resultMap>
+
+    <sql id="selectHrInterviewQuestionsVo">
+        select id, question, question_format, correct_answer, answer_list, question_score, category, sub_category, create_time, create_by, update_time, update_by, is_enabled from hr_interview_questions
+    </sql>
+
+    <select id="selectHrInterviewQuestionsList" parameterType="HrInterviewQuestions" resultMap="HrInterviewQuestionsResult">
+        <include refid="selectHrInterviewQuestionsVo"/>
+        <where>  
+            <if test="question != null  and question != ''"> and question like concat('%', #{question}, '%')</if>
+            <if test="questionFormat != null  and questionFormat != ''"> and question_format = #{questionFormat}</if>
+            <if test="category != null  and category != ''"> and category = #{category}</if>
+            <if test="subCategory != null  and subCategory != ''"> and sub_category = #{subCategory}</if>
+        </where>
+    </select>
+    
+    <select id="selectHrInterviewQuestionsById" parameterType="String" resultMap="HrInterviewQuestionsResult">
+        <include refid="selectHrInterviewQuestionsVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectHrInterviewQuestionsByPQId" parameterType="String" resultMap="HrInterviewQuestionsResult">
+		select id, question, question_format, correct_answer, answer_list, question_score, category, sub_category, create_time, create_by, update_time, update_by, is_enabled 
+		from hr_interview_questions
+		where id in (
+		SELECT 
+		    SUBSTRING_INDEX(SUBSTRING_INDEX(q.question_id,',',c.help_topic_id+1),',',-1) AS num 
+		FROM 
+		    mysql.help_topic c, hr_position_questions q
+		WHERE 
+		    c.help_topic_id &lt; LENGTH((q.question_id)-LENGTH(REPLACE(q.question_id,',','')))+1
+		    and q.id = #{id} 
+		)
+    </select>
+
+    <select id="selectAllCateSubCate" parameterType="String" resultMap="HrInterviewQuestionsResult">
+        select category, sub_category 
+        from hr_interview_questions 
+        group by category, sub_category 
+        order by category, sub_category
+    </select>
+        
+    <insert id="insertHrInterviewQuestions" parameterType="HrInterviewQuestions">
+        insert into hr_interview_questions
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="question != null and question != ''">question,</if>
+            <if test="questionFormat != null and questionFormat != ''">question_format,</if>
+            <if test="correctAnswer != null and correctAnswer != ''">correct_answer,</if>
+            <if test="answerList != null and answerList != ''">answer_list,</if>
+            <if test="questionScore != null">question_score,</if>
+            <if test="category != null and category != ''">category,</if>
+            <if test="subCategory != null and subCategory != ''">sub_category,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="isEnabled != null">is_enabled,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="question != null and question != ''">#{question},</if>
+            <if test="questionFormat != null and questionFormat != ''">#{questionFormat},</if>
+            <if test="correctAnswer != null and correctAnswer != ''">#{correctAnswer},</if>
+            <if test="answerList != null and answerList != ''">#{answerList},</if>
+            <if test="questionScore != null">#{questionScore},</if>
+            <if test="category != null and category != ''">#{category},</if>
+            <if test="subCategory != null and subCategory != ''">#{subCategory},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="isEnabled != null">#{isEnabled},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHrInterviewQuestions" parameterType="HrInterviewQuestions">
+        update hr_interview_questions
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="question != null and question != ''">question = #{question},</if>
+            <if test="questionFormat != null and questionFormat != ''">question_format = #{questionFormat},</if>
+            <if test="correctAnswer != null and correctAnswer != ''">correct_answer = #{correctAnswer},</if>
+            <if test="answerList != null and answerList != ''">answer_list = #{answerList},</if>
+            <if test="questionScore != null">question_score = #{questionScore},</if>
+            <if test="category != null and category != ''">category = #{category},</if>
+            <if test="subCategory != null and subCategory != ''">sub_category = #{subCategory},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createBy != null and createBy != ''">create_by = #{createBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="isEnabled != null">is_enabled = #{isEnabled},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteHrInterviewQuestionsById" parameterType="String">
+        delete from hr_interview_questions where id = #{id}
+    </delete>
+
+    <delete id="deleteHrInterviewQuestionsByIds" parameterType="String">
+        delete from hr_interview_questions where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

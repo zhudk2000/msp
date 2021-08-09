@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('岗位考题预览')" />
+</head>
+<body class="white-bg">
+    <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            <label>岗位名称：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblPositionName" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                        <li>
+                            <label>需求部门：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblReqDepartment" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="wrapper wrapper-content animated fadeInRight ibox-content" id="divContent">
+                <!-- Here is body ... -->
+            </div>
+            <input type="hidden" id ="allQuizs">
+        </div>
+    </div>
+
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "system/position_quiz";
+
+        $(function() {
+            $("#lblPositionName").text([[${position.positionName}]]);
+            $("#lblReqDepartment").text([[${position.requestDepartment}]]);
+            renderQuiz();
+        });
+
+        function renderQuiz(){
+            let contentHtml = '';
+            let arrCate = [[${quiz_category}]];
+            let arrQuiz = [[${questions}]];
+            let quizIds = "";
+            //循环问题大类
+            arrCate.forEach((cate, idx, array) =>{
+                contentHtml += '<div class="ibox"><div class="ibox-title"><h5>' + cate + '</h5></div><div class="ibox-content">';
+                // 循环获取问题小类
+                arrQuiz.forEach((quiz, idx, arrayQ) =>{
+                    if (cate == quiz.questionCategory){
+                        contentHtml += '<div><h4>' + quiz.questionSubCategory + '</h4></div>';
+                        contentHtml += '<div class="row">';
+                        // 显示问题
+                        $.ajax({
+                            cache : true,
+                            type : "POST",
+                            url : ctx + "system/position_quiz/getQuizListByPQid",
+                            data : {
+                                "id": quiz.id
+                            },
+                            async : false,
+                            error : function(request) {
+                                $.modal.alertError("系统错误");
+                            },
+                            success : function(data) {
+                                data.rows.forEach ((row, idx, array) =>{
+                                    contentHtml += '<div class="col-sm-12"><span class="col-sm-6" style="text-align:left;">问题：' + row.question + '</span>';
+                                    // 根据题目类型生成不同的html
+                                    if (row.questionFormat == "3"){  //填空 textarea
+                                        contentHtml += '<div class="col-sm-12"><span class="col-sm-10"><textarea id="' + row.id + '" rows="3" style="width:100%"></textarea></span></div>';
+                                    }else if (row.questionFormat == "2"){  //填空
+                                        contentHtml += '<span class="col-sm-6"><input id="' + row.id + '" type="text"></span>';
+                                    }else{   //选择
+                                        contentHtml += '<span class="col-sm-6">';
+                                        contentHtml += '<label><input type="radio" value="1" name="' + row.id + '">是</label>&nbsp;&nbsp;';
+                                        contentHtml += '<label><input type="radio" value="0" name="' + row.id + '"> 否</label>';
+                                        contentHtml += '</span>';
+                                    }
+                                    contentHtml += '</div>';
+                                    quizIds += row.id + ';';
+                                });
+                            }
+                        });
+                        // contentHtml += '<div>' + quiz.questionId + '</div>';
+                        contentHtml += '</div>';
+                    }
+                });
+                contentHtml += '</div></div>';
+            });
+            //console.log(contentHtml);
+            $("#divContent").append(contentHtml);
+            $("#allQuizs").val(quizIds);
+        }
+
+    </script>
+</body>
+</html>

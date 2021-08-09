@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.HrCandidateQaSummaryMapper">
+    
+    <resultMap type="HrCandidateQaSummary" id="HrCandidateQaSummaryResult">
+        <result property="id"    column="id"    />
+        <result property="positionId"    column="position_id"    />
+        <result property="questionCategory"    column="question_category"    />
+        <result property="positionName"    column="position_name"    />
+        <result property="candidateId"    column="candidate_id"    />
+        <result property="candidateName"    column="candidate_name"    />
+        <result property="candidateScore"    column="candidate_score"    />
+        <result property="answerBatch"    column="answer_batch"    />
+    </resultMap>
+
+    <sql id="selectHrCandidateQaSummaryVo">
+        select id, position_id, question_category, position_name, candidate_id, candidate_name, candidate_score, answer_batch from hr_candidate_qa_summary
+    </sql>
+
+    <select id="selectHrCandidateQaSummaryList" parameterType="HrCandidateQaSummary" resultMap="HrCandidateQaSummaryResult">
+        <include refid="selectHrCandidateQaSummaryVo"/>
+        <where>  
+            <if test="positionName != null  and positionName != ''"> and position_name like concat('%', #{positionName}, '%')</if>
+            <if test="candidateName != null  and candidateName != ''"> and candidate_name like concat('%', #{candidateName}, '%')</if>
+            <if test="answerBatch != null  and answerBatch != ''"> and answer_batch like concat('%', #{answerBatch}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectHrCandidateQaSummaryById" parameterType="String" resultMap="HrCandidateQaSummaryResult">
+        <include refid="selectHrCandidateQaSummaryVo"/>
+        where id = #{id}
+    </select>
+        
+    <insert id="insertHrCandidateQaSummary" parameterType="HrCandidateQaSummary">
+        insert into hr_candidate_qa_summary
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="positionId != null and positionId != ''">position_id,</if>
+            <if test="questionCategory != null">question_category,</if>
+            <if test="positionName != null and positionName != ''">position_name,</if>
+            <if test="candidateId != null and candidateId != ''">candidate_id,</if>
+            <if test="candidateName != null and candidateName != ''">candidate_name,</if>
+            <if test="candidateScore != null">candidate_score,</if>
+            <if test="answerBatch != null and answerBatch != ''">answer_batch,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="positionId != null and positionId != ''">#{positionId},</if>
+            <if test="questionCategory != null">#{questionCategory},</if>
+            <if test="positionName != null and positionName != ''">#{positionName},</if>
+            <if test="candidateId != null and candidateId != ''">#{candidateId},</if>
+            <if test="candidateName != null and candidateName != ''">#{candidateName},</if>
+            <if test="candidateScore != null">#{candidateScore},</if>
+            <if test="answerBatch != null and answerBatch != ''">#{answerBatch},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHrCandidateQaSummary" parameterType="HrCandidateQaSummary">
+        update hr_candidate_qa_summary
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="positionId != null and positionId != ''">position_id = #{positionId},</if>
+            <if test="questionCategory != null">question_category = #{questionCategory},</if>
+            <if test="positionName != null and positionName != ''">position_name = #{positionName},</if>
+            <if test="candidateId != null and candidateId != ''">candidate_id = #{candidateId},</if>
+            <if test="candidateName != null and candidateName != ''">candidate_name = #{candidateName},</if>
+            <if test="candidateScore != null">candidate_score = #{candidateScore},</if>
+            <if test="answerBatch != null and answerBatch != ''">answer_batch = #{answerBatch},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteHrCandidateQaSummaryById" parameterType="String">
+        delete from hr_candidate_qa_summary where id = #{id}
+    </delete>
+
+    <delete id="deleteHrCandidateQaSummaryByIds" parameterType="String">
+        delete from hr_candidate_qa_summary where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

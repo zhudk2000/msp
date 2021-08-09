@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.HrPositionQuestionsMapper">
+    
+    <resultMap type="HrPositionQuestions" id="HrPositionQuestionsResult">
+        <result property="id"    column="id"    />
+        <result property="positionId"    column="position_id"    />
+        <result property="questionId"    column="question_id"    />
+        <result property="questionCategory"    column="question_category"    />
+        <result property="questionSubCategory"    column="question_sub_category"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="positionName"    column="position_name"    />
+    </resultMap>
+
+    <sql id="selectHrPositionQuestionsVo">
+        select id, position_id, question_id, question_category, question_sub_category, create_time, create_by, position_name from hr_position_questions
+    </sql>
+
+    <select id="selectHrPositionQuestionsList" parameterType="HrPositionQuestions" resultMap="HrPositionQuestionsResult">
+        <include refid="selectHrPositionQuestionsVo"/>
+        <where>  
+            <if test="questionCategory != null  and questionCategory != ''"> and question_category = #{questionCategory}</if>
+            <if test="questionSubCategory != null  and questionSubCategory != ''"> and question_sub_category = #{questionSubCategory}</if>
+            <if test="positionName != null  and positionName != ''"> and position_name like concat('%', #{positionName}, '%')</if>
+            <if test="positionId != null  and positionId != ''"> and position_id = #{positionId}</if>
+        </where>
+    </select>
+    
+    <select id="selectHrPositionQuestionsById" parameterType="String" resultMap="HrPositionQuestionsResult">
+        <include refid="selectHrPositionQuestionsVo"/>
+        where id = #{id}
+    </select>
+        
+    <select id="selectHrPositionQuestionsByPositionId" parameterType="String" resultMap="HrPositionQuestionsResult">
+        <include refid="selectHrPositionQuestionsVo"/>
+        where position_id = #{positionId}
+    </select>        
+        
+    <insert id="insertHrPositionQuestions" parameterType="HrPositionQuestions">
+        insert into hr_position_questions
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="positionId != null and positionId != ''">position_id,</if>
+            <if test="questionId != null and questionId != ''">question_id,</if>
+            <if test="questionCategory != null">question_category,</if>
+            <if test="questionSubCategory != null">question_sub_category,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="positionName != null and positionName != ''">position_name,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="positionId != null and positionId != ''">#{positionId},</if>
+            <if test="questionId != null and questionId != ''">#{questionId},</if>
+            <if test="questionCategory != null">#{questionCategory},</if>
+            <if test="questionSubCategory != null">#{questionSubCategory},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="positionName != null and positionName != ''">#{positionName},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHrPositionQuestions" parameterType="HrPositionQuestions">
+        update hr_position_questions
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="positionId != null and positionId != ''">position_id = #{positionId},</if>
+            <if test="questionId != null and questionId != ''">question_id = #{questionId},</if>
+            <if test="questionCategory != null">question_category = #{questionCategory},</if>
+            <if test="questionSubCategory != null">question_sub_category = #{questionSubCategory},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="positionName != null and positionName != ''">position_name = #{positionName},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteHrPositionQuestionsById" parameterType="String">
+        delete from hr_position_questions where id = #{id}
+    </delete>
+
+    <delete id="deleteHrPositionQuestionsByIds" parameterType="String">
+        delete from hr_position_questions where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

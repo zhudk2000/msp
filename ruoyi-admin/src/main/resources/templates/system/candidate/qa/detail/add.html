@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('候选人答题')" />
+</head>
+<body class="white-bg">
+    <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            <label>候选人：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblCandidateName" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                        <li>
+                            <label>岗位名称：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblPositionName" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                        <li>
+                            <label>需求部门：</label>
+                        </li>
+                        <li class="col-sm-2">
+                            <label id="lblReqDepartment" style="font-weight:bolder;text-align:left;width:100%;"></label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="wrapper wrapper-content animated fadeInRight ibox-content" id="divContent">
+                <!-- Here is body ... -->
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-offset-5 col-sm-10">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭 </button>
+                </div>
+            </div>
+
+            <input type="hidden" id ="allQuizs">
+            <input type="hidden" id="answerBatch">
+        </div>
+    </div>
+
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "system/candidate/qa/detail"
+        var candidate;
+        var position;
+        var arrQuiz;
+        var answerBatch;
+        var arrCate;
+        var questionNames = [];
+        var answers = [];
+
+        $(function() {
+            candidate = [[${candidate}]];
+            position = [[${position}]];
+            arrQuiz = [[${quiz}]];
+            answerBatch = [[${answerBatch}]];
+            arrCate = [[${quiz_category}]];
+
+            renderQuiz();
+        });
+
+        function renderQuiz(){
+            
+            $("#lblCandidateName").text(candidate.cname);
+            $("#lblPositionName").text(candidate.interviewPosition1);
+            $("#lblReqDepartment").text(position.requestDepartment);
+            $("#answerBatch").val(answerBatch);
+
+            let contentHtml = '';
+            let quizIds = "";
+            //循环问题大类
+            arrCate.forEach((cate, idx, array) =>{
+                contentHtml += '<div class="ibox"><div class="ibox-title"><h5>' + cate + '</h5></div><div class="ibox-content">';
+                // 循环获取问题小类
+                arrQuiz.forEach((quiz, idx, arrayQ) =>{
+                    if (cate == quiz.questionCategory){
+                        contentHtml += '<div><h4>' + quiz.questionSubCategory + '</h4></div>';
+                        contentHtml += '<div class="row">';
+                        // 显示问题
+                        $.ajax({
+                            cache : true,
+                            type : "POST",
+                            url : ctx + "system/position_quiz/getQuizListByPQid",
+                            data : {
+                                "id": quiz.id
+                            },
+                            async : false,
+                            error : function(request) {
+                                $.modal.alertError("系统错误");
+                            },
+                            success : function(data) {
+                                data.rows.forEach ((row, idx, array) =>{
+                                    contentHtml += '<div class="col-sm-12"><span class="col-sm-6" style="text-align:left;" id="span-' + row.id + '">' +  (idx + 1) + '：' + row.question + '</span>';
+                                        // 根据题目类型生成不同的html
+                                    if (row.questionFormat == "3"){  //填空 textarea
+                                        contentHtml += '<div class="col-sm-12"><span class="col-sm-10"><textarea id="' + row.id + '" rows="3" style="width:100%"></textarea></span></div>';
+                                    }else if (row.questionFormat == "2"){  //填空
+                                        contentHtml += '<span class="col-sm-4"><input id="' + row.id + '" type="text" style="width:100%"></span>';
+                                    }else{   //选择
+                                        contentHtml += '<span class="col-sm-6">';
+                                        contentHtml += '<label><input type="radio" value="1" name="' + row.id + '" id="' + row.id + '">是</label>&nbsp;&nbsp;';
+                                        contentHtml += '<label><input type="radio" value="0" name="' + row.id + '" id="' + row.id + '"> 否</label>';
+                                        contentHtml += '</span>';
+                                    }
+                                    contentHtml += '</div>';
+                                    quizIds += row.id + ';';
+                                });
+                            }
+                        });
+                        contentHtml += '</div>';
+                    }
+                });
+                contentHtml += '</div></div>';
+            });
+
+            $("#divContent").append(contentHtml);
+            if (quizIds != "") quizIds = quizIds.substring(0, quizIds.length - 1);
+            $("#allQuizs").val(quizIds);
+        }
+
+        $("#form-candidate-qa-detail-add").validate({
+            focusCleanup: true
+        });
+
+        function validateForm(){
+            let arrQuizId = $("#allQuizs").val().split(";");
+            let isContinue = true;
+            let errMsg = "";
+            questionNames = [];
+            answers = [];
+            try{
+                arrQuizId.forEach((quiz, idx, array) =>{
+                    let obj = $("input[id='" + quiz + "']");
+                    if (obj.length == 0){
+                        // textarea
+                        if ($("#"+quiz).val() == ""){
+                            isContinue = false;
+                            errMsg = "题目【" + $("#span-" + quiz).html() + "】未作答！";
+                        }else{
+                            answers.push($("#"+quiz).val());
+                        }
+                    }else if (obj.length == 1){
+                        // text hidden ...
+                        if ($("#"+quiz).val() == ""){
+                            isContinue = false;
+                            errMsg = "题目【" + $("#span-" + quiz).html() + "】未作答！";
+                        }else{
+                            answers.push($("#"+quiz).val());
+                        }
+                    }else{
+                        // selector再次判断类型
+                        if (!$("input[name=" + quiz + "]:checked").val()){
+                            isContinue = false;
+                            errMsg = "题目【" + $("#span-" + quiz).html() + "】未作答！";
+                        }else{
+                            answers.push($("input[name=" + quiz + "]:checked").val());
+                        }
+                        let s = obj[1].outerHTML;
+                    }
+
+                    if (!isContinue){
+                        $('html, body').animate({scrollTop: $("#span-" + quiz).offset().top - 100}, 100);
+                        throw new Error(errMsg);
+                    }else{
+                        questionNames.push($("#span-" + quiz).html());
+                    }
+                });
+            }catch(e){
+                $.modal.alertWarning(errMsg);
+                return "failed";
+            }
+            return "passed"
+        }
+
+        function getJsonData(){
+            let jsonData = [];
+
+            let arrQuizId = $("#allQuizs").val().split(";");
+            arrQuizId.forEach((quiz, idx, array) =>{
+                let row = {};
+                row.answerBatch = $("#answerBatch").val();
+                row.candidateId = candidate.id;
+                row.candidateName = candidate.cname;
+                row.positionName = candidate.interviewPosition1;
+                row.positionId = candidate.interviewPosition1Id;
+                for(i=0; i<arrQuiz.length; i++){
+                    let pq = arrQuiz[i];
+                    if (pq.questionId.indexOf(quiz) != -1){
+                        row.questionId = quiz;
+                        row.positionQuestionId = pq.id;
+                        row.questionCategory = pq.questionCategory;
+                        row.questionSubCategory = pq.questionSubCategory;
+                        //
+                        row.candidateAnswer = answers[idx];
+                        row.questionDesc = questionNames[idx];
+                        break;
+                    }
+                }
+                jsonData.push(row);
+            });
+
+            return jsonData;
+        }
+
+        function submitHandler() {
+            if (validateForm() == "failed") return;
+            let p = getJsonData();
+
+            $.ajax({
+                cache : true,
+                type : "POST",
+                url : prefix + "/saveAnswer",
+                data : {
+                    "answer": encodeURIComponent(JSON.stringify(p))
+                },
+                async : false,
+                error : function(request) {
+                    $.modal.alertError("系统错误");
+                },
+                success : function(data) {
+                    if (data == "saved"){
+                        alert("保存成功！");
+                        closeItem();
+                    }else{
+                        $.modal.alertWarning("保存失败，请检查数据!");
+                    }
+                }
+            });
+            /*if ($.validate.form()) {
+                $.operate.save(prefix + "/add", $('#form-candidate-qa-detail-add').serialize());
+            }*/
+        }
+    </script>
+</body>
+</html>
